@@ -13,8 +13,8 @@ entity gba_drawer_mode0 is
       lockspeed            : in  std_logic;
       pixelpos             : in  integer range 0 to 511;
       
-      ypos                 : in  integer range 0 to 159;
-      ypos_mosaic          : in  integer range 0 to 159;
+      ypos                 : in  integer range 0 to 215;
+      ypos_mosaic          : in  integer range 0 to 215;
       mapbase              : in  unsigned(4 downto 0);
       tilebase             : in  unsigned(1 downto 0);
       hicolor              : in  std_logic;

@@ -18,8 +18,8 @@ entity gba_drawer_obj is
       busy                 : buffer std_logic := '0';
       
       drawline             : in  std_logic;
-      ypos                 : in  integer range 0 to 159;
-      ypos_mosaic          : in  integer range 0 to 159;
+      ypos                 : in  integer range 0 to 215;
+      ypos_mosaic          : in  integer range 0 to 215;
       
       BG_Mode              : in  std_logic_vector(2 downto 0);
       one_dim_mapping      : in  std_logic;

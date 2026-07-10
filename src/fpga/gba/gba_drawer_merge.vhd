@@ -10,7 +10,7 @@ entity gba_drawer_merge is
       enable               : in  std_logic;
       hblank               : in  std_logic;
       xpos                 : in  integer range 0 to 239;
-      ypos                 : in  integer range 0 to 159;
+      ypos                 : in  integer range 0 to 215;
       
       in_WND0_on           : in  std_logic;
       in_WND1_on           : in  std_logic;
@@ -69,7 +69,7 @@ entity gba_drawer_merge is
       
       pixeldata_out        : out std_logic_vector(15 downto 0) := (others => '0');
       pixel_x              : out integer range 0 to 239;
-      pixel_y              : out integer range 0 to 159;
+      pixel_y              : out integer range 0 to 215;
       pixel_we             : out std_logic
    );
 end entity;
@@ -153,7 +153,7 @@ architecture arch of gba_drawer_merge is
    -- ####################################
    signal enable_cycle1         : std_logic;
    signal xpos_cycle1           : integer range 0 to 239;
-   signal ypos_cycle1           : integer range 0 to 159;                 
+   signal ypos_cycle1           : integer range 0 to 215;                 
    signal pixeldata_bg0_cycle1  : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg1_cycle1  : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg2_cycle1  : std_logic_vector(15 downto 0) := (others => '0');
@@ -168,7 +168,7 @@ architecture arch of gba_drawer_merge is
    -- ####################################
    signal enable_cycle2           : std_logic;
    signal xpos_cycle2             : integer range 0 to 239;
-   signal ypos_cycle2             : integer range 0 to 159;                 
+   signal ypos_cycle2             : integer range 0 to 215;                 
    signal pixeldata_bg0_cycle2    : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg1_cycle2    : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg2_cycle2    : std_logic_vector(15 downto 0) := (others => '0');
@@ -184,7 +184,7 @@ architecture arch of gba_drawer_merge is
    -- ####################################
    signal enable_cycle3           : std_logic;
    signal xpos_cycle3             : integer range 0 to 239;
-   signal ypos_cycle3             : integer range 0 to 159;                 
+   signal ypos_cycle3             : integer range 0 to 215;                 
    signal pixeldata_bg0_cycle3    : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg1_cycle3    : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg2_cycle3    : std_logic_vector(15 downto 0) := (others => '0');
@@ -202,7 +202,7 @@ architecture arch of gba_drawer_merge is
    -- ####################################
    signal enable_cycle4           : std_logic;
    signal xpos_cycle4             : integer range 0 to 239;
-   signal ypos_cycle4             : integer range 0 to 159;                 
+   signal ypos_cycle4             : integer range 0 to 215;                 
    signal pixeldata_bg0_cycle4    : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg1_cycle4    : std_logic_vector(15 downto 0) := (others => '0');
    signal pixeldata_bg2_cycle4    : std_logic_vector(15 downto 0) := (others => '0');

@@ -117,8 +117,8 @@ entity gba_top is
       GBA_Bus_written       : in     std_logic;
       -- display data
       pixel_out_x           : buffer integer range 0 to 239;
-      pixel_out_y           : buffer integer range 0 to 159;
-      pixel_out_addr        : buffer integer range 0 to 38399;       -- address for framebuffer 
+      pixel_out_y           : buffer integer range 0 to 215;
+      pixel_out_addr        : buffer integer range 0 to 51839;       -- address for framebuffer 
       pixel_out_data        : buffer std_logic_vector(17 downto 0);  -- RGB data for framebuffer 
       pixel_out_we          : buffer std_logic;                      -- new pixel for framebuffer
       -- sound                             

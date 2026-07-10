@@ -13,8 +13,12 @@
 // so it sees exactly 240 active pixels per line.
 //
 // Timing:  308 dots/line (240 active + 68 blank)
-//          228 lines/frame (160 active + 68 blank)
+//          228 lines/frame (216 active + 12 blank) -- TALL scanout
 //          Frame rate: 4,194,304 / (308 x 228) = 59.7275 Hz
+//
+// TALL: the GPU renders 216 lines (56 into GBA vblank); scanning them out
+// keeps the frame at 228 total lines, so the refresh rate is unchanged.
+// 240x216 is exactly 10:9 -- the Pocket's native screen shape.
 
 module video_adapter (
     input  wire        clk_sys,       // ~100.66 MHz - GPU write domain
@@ -22,7 +26,7 @@ module video_adapter (
     input  wire        reset,         // Active high - hold until PLL locked
 
     // GBA GPU framebuffer write interface (clk_sys domain)
-    input  wire [15:0] pixel_addr,    // 0-38399 (linear: row*240 + col)
+    input  wire [15:0] pixel_addr,    // 0-51839 (linear: row*240 + col)
     input  wire [17:0] pixel_data,    // {R[5:0], G[5:0], B[5:0]}
     input  wire        pixel_we,
 
@@ -41,16 +45,16 @@ module video_adapter (
     localparam int unsigned H_BP     = 38;
     localparam int unsigned H_TOTAL  = H_ACTIVE + H_FP + H_SYNC + H_BP;
 
-    localparam int unsigned V_ACTIVE = 160;
-    localparam int unsigned V_FP     = 5;
+    localparam int unsigned V_ACTIVE = 216;
+    localparam int unsigned V_FP     = 2;
     localparam int unsigned V_SYNC   = 5;
-    localparam int unsigned V_BP     = 58;
+    localparam int unsigned V_BP     = 5;
     localparam int unsigned V_TOTAL  = V_ACTIVE + V_FP + V_SYNC + V_BP;
 
     localparam int unsigned FB_PIXELS = H_ACTIVE * V_ACTIVE;
 
     // === Framebuffer (dual-clock BRAM) ===
-    // 38,400 x 18-bit ~ 86 KB ~ 30 M10K blocks
+    // 51,840 x 18-bit ~ 117 KB ~ 41 M10K blocks (240x216 tall)
     // Port A (clk_sys): GPU writes at arbitrary addresses
     // Port B (clk_vid): Raster scan reads linearly
     reg [17:0] framebuffer [0:FB_PIXELS - 1];

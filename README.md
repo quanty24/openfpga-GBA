@@ -1,3 +1,20 @@
+# GBA Tall (240x216) for Analogue Pocket
+
+**Fork of [mincer-ray/openfpga-GBA](https://github.com/mincer-ray/openfpga-GBA)
+with a 10:9 tall scanout**: the GPU keeps rendering 56 lines into the GBA's
+vblank (lines 160-215) and the core scans out 240x216 -- exactly the
+Pocket's native screen shape, so tall-aware homebrew fills the display
+edge to edge. Regular games still run, but show garbage in the extra 56
+lines; use the stock GBA core for them. Installs alongside the stock core
+as "GBATall".
+
+GBA-visible behavior (VBlank flag/IRQ/DMA timing) is untouched: homebrew
+opts in simply by keeping VRAM/scroll valid for the extended region, and
+should defer vblank register writes to VCOUNT >= 216 to avoid racing the
+tall lines.
+
+---
+
 # GBA for Analogue Pocket
 
 [![Latest Release](https://img.shields.io/github/v/tag/mincer-ray/openfpga-GBA?label=latest)](https://github.com/mincer-ray/openfpga-GBA/releases/latest) [![Downloads](https://img.shields.io/github/downloads/mincer-ray/openfpga-GBA/total)](https://github.com/mincer-ray/openfpga-GBA/releases) [![Platform](https://img.shields.io/badge/platform-Analogue%20Pocket-blue)](https://openfpga-library.github.io/analogue-pocket/)

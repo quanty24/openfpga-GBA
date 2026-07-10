@@ -11,15 +11,15 @@ entity gba_gpu_colorshade is
 
       pixel_in_x           : in    integer range 0 to 239;
       pixel_in_2x          : in    integer range 0 to 479;
-      pixel_in_y           : in    integer range 0 to 159;
-      pixel_in_addr        : in    integer range 0 to 38399;
+      pixel_in_y           : in    integer range 0 to 215;
+      pixel_in_addr        : in    integer range 0 to 51839;
       pixel_in_data        : in    std_logic_vector(14 downto 0);  
       pixel_in_we          : in    std_logic := '0';
                   
       pixel_out_x          : out   integer range 0 to 239;
       pixel_out_2x         : out   integer range 0 to 479;
-      pixel_out_y          : out   integer range 0 to 159;
-      pixel_out_addr       : out   integer range 0 to 38399;
+      pixel_out_y          : out   integer range 0 to 215;
+      pixel_out_addr       : out   integer range 0 to 51839;
       pixel_out_data       : out   std_logic_vector(17 downto 0);  
       pixel_out_we         : out   std_logic := '0'
    );
@@ -159,8 +159,8 @@ architecture arch of gba_gpu_colorshade is
    -- shade processing
    signal pixel_1_x      : integer range 0 to 239;
    signal pixel_1_2x     : integer range 0 to 479;
-   signal pixel_1_y      : integer range 0 to 159;
-   signal pixel_1_addr   : integer range 0 to 38399;
+   signal pixel_1_y      : integer range 0 to 215;
+   signal pixel_1_addr   : integer range 0 to 51839;
    signal pixel_1_we     : std_logic := '0';
    signal color_linear_1 : integer range 0 to 1023;
    signal color_linear_2 : integer range 0 to 1023;
@@ -168,32 +168,32 @@ architecture arch of gba_gpu_colorshade is
    
    signal pixel_2_x      : integer range 0 to 239;
    signal pixel_2_2x     : integer range 0 to 479;
-   signal pixel_2_y      : integer range 0 to 159;
-   signal pixel_2_addr   : integer range 0 to 38399;
+   signal pixel_2_y      : integer range 0 to 215;
+   signal pixel_2_addr   : integer range 0 to 51839;
    signal pixel_2_we     : std_logic := '0';
    type t_shade_precalc is array(1 to 3, 1 to 3) of integer range -1048575 to 1048575;
    signal shade_precalc : t_shade_precalc := (others => (others => 0));
    
    signal pixel_3_x      : integer range 0 to 239;
    signal pixel_3_2x     : integer range 0 to 479;
-   signal pixel_3_y      : integer range 0 to 159;
-   signal pixel_3_addr   : integer range 0 to 38399;
+   signal pixel_3_y      : integer range 0 to 215;
+   signal pixel_3_addr   : integer range 0 to 51839;
    signal pixel_3_we     : std_logic := '0';
    type t_shade_linear is array(1 to 3) of integer range -2047 to 2047;
    signal shade_linear : t_shade_linear;
    
    signal pixel_4_x     : integer range 0 to 239;
    signal pixel_4_2x    : integer range 0 to 479;
-   signal pixel_4_y     : integer range 0 to 159;
-   signal pixel_4_addr  : integer range 0 to 38399;
+   signal pixel_4_y     : integer range 0 to 215;
+   signal pixel_4_addr  : integer range 0 to 51839;
    signal pixel_4_we    : std_logic := '0';
    type t_clip_linear is array(1 to 3) of integer range 0 to 1023;
    signal clip_linear : t_clip_linear;
    
    signal pixel_5_x     : integer range 0 to 239;
    signal pixel_5_2x    : integer range 0 to 479;
-   signal pixel_5_y     : integer range 0 to 159;
-   signal pixel_5_addr  : integer range 0 to 38399;
+   signal pixel_5_y     : integer range 0 to 215;
+   signal pixel_5_addr  : integer range 0 to 51839;
    signal pixel_5_we    : std_logic := '0';
    signal clip_linear_1 : t_clip_linear;
    type t_color_upper is array(1 to 3) of std_logic_vector(2 downto 0);

@@ -215,6 +215,10 @@ begin
                               line_trigger <= '1';
                            else
                               gpustate                  <= VBLANK;
+                              -- TALL scanout: line 160 still renders; all
+                              -- GBA-visible vblank semantics stay exact
+                              drawsoon                  <= '1';
+                              pixelpos                  <= 0;
                               refpoint_update           <= '1';
                               REG_DISPSTAT_V_Blank_flag <= "1";
                               vblank_trigger            <= '1';
@@ -226,7 +230,20 @@ begin
                      end if;
                   
                   when VBLANK =>
+                     -- TALL scanout: mirror VISIBLE's draw pacing so lines
+                     -- 160..215 render during vblank (drawsoon is only set
+                     -- for those lines)
+                     if ((lockspeed = '0' or cycles >= 160)) then
+                        if (lockspeed = '1') then
+                           pixelpos  <= (to_integer(cycles) / 2) - 80;
+                        end if;
+                        if (drawsoon = '1') then
+                           drawline  <= '1';
+                           drawsoon  <= '0';
+                        end if;
+                     end if;
                      if (cycles >= 1008) then
+                        pixelpos                   <= 240;
                         cycles                     <= cycles - 1008;
                         gpustate                   <= VBLANKHBLANK;
                         REG_DISPSTAT_H_Blank_flag  <= "1";
@@ -265,6 +282,11 @@ begin
                            pixelpos    <= 0;
                         else
                            gpustate <= VBLANK;
+                           if ((linecounter + 1) < 216) then
+                              -- TALL scanout: lines 161..215 keep drawing
+                              drawsoon <= '1';
+                              pixelpos <= 0;
+                           end if;
                            if ((linecounter + 1) = 227) then
                               REG_DISPSTAT_V_Blank_flag <= "0";  -- (set in line 160..226; not 227)
                            end if;

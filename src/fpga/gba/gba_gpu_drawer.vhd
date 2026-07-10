@@ -25,8 +25,8 @@ entity gba_gpu_drawer is
       vram_block_mode      : out   std_logic;
 
       pixel_out_x          : out   integer range 0 to 239;
-      pixel_out_y          : out   integer range 0 to 159;
-      pixel_out_addr       : out   integer range 0 to 38399;
+      pixel_out_y          : out   integer range 0 to 215;
+      pixel_out_addr       : out   integer range 0 to 51839;
       pixel_out_data       : out   std_logic_vector(14 downto 0);
       pixel_out_we         : out   std_logic := '0';
       drawer_ready         : out   std_logic := '0';
@@ -352,7 +352,7 @@ architecture arch of gba_gpu_drawer is
    signal clear_trigger              : std_logic := '0';
    signal clear_trigger_1            : std_logic := '0';
                                      
-   signal linecounter_int            : integer range 0 to 159;
+   signal linecounter_int            : integer range 0 to 215;
    signal linebuffer_addr            : integer range 0 to 239;
    signal linebuffer_addr_1          : integer range 0 to 239;
                                      
@@ -377,25 +377,28 @@ architecture arch of gba_gpu_drawer is
    signal merge_enable_1         : std_logic := '0';
    signal merge_pixeldata_out    : std_logic_vector(15 downto 0);
    signal merge_pixel_x          : integer range 0 to 239;
-   signal merge_pixel_y          : integer range 0 to 159;
+   signal merge_pixel_y          : integer range 0 to 215;
    signal merge_pixel_we         : std_logic := '0';
    signal objwindow_merge        : std_logic := '0';
    signal objwindow_merge_in     : std_logic := '0';
                                  
    signal pixel_out_x_1          : integer range 0 to 239;
-   signal pixel_out_y_1          : integer range 0 to 159;                   
-   signal pixelout_addr_1        : integer range 0 to 38399;
+   signal pixel_out_y_1          : integer range 0 to 215;                   
+   signal pixelout_addr_1        : integer range 0 to 51839;
    signal merge_pixel_we_1       : std_logic := '0';
    signal merge_pixeldata_out_1  : std_logic_vector(15 downto 0);
    
    signal pixel_out_x_2          : integer range 0 to 239;
-   signal pixel_out_y_2          : integer range 0 to 159; 
-   signal pixelout_addr_2        : integer range 0 to 38399;
+   signal pixel_out_y_2          : integer range 0 to 215; 
+   signal pixelout_addr_2        : integer range 0 to 51839;
    signal merge_pixel_we_2       : std_logic := '0';
    signal merge_pixeldata_out_2  : std_logic_vector(15 downto 0);
                                  
-   signal lineUpToDate           : std_logic_vector(0 to 159) := (others => '0');
-   signal linesDrawn             : integer range 0 to 160 := 0;
+   -- TALL scanout: the drawer renders 216 lines per frame (160 GBA-visible
+   -- plus 56 into vblank) so homebrew that keeps VRAM valid below line 160
+   -- fills the Pocket's 10:9 screen. GBA-visible state is untouched.
+   signal lineUpToDate           : std_logic_vector(0 to 215) := (others => '0');
+   signal linesDrawn             : integer range 0 to 216 := 0;
    signal nextLineDrawn          : std_logic := '0';
    signal start_draw             : std_logic := '0';
    
@@ -1292,7 +1295,7 @@ begin
          if (pixel_objwnd     = '1') then linebuffer_objwindow(pixel_x_obj) <= '1'; end if;
          
          -- synthesis translate_off
-         if (to_integer(linecounter) < 160) then
+         if (to_integer(linecounter) < 216) then
          -- synthesis translate_on
          nextLineDrawn <= lineUpToDate(to_integer(linecounter));
          -- synthesis translate_off
@@ -1320,13 +1323,16 @@ begin
          -- Track whether this rendered frame has accounted for all visible lines.
          -- Classic fast-forward relies on retaining this map across incomplete
          -- frames; otherwise skipped lines remain frozen in the framebuffer.
+         -- vblank_trigger fires at line 160; the 56 tall lines of THIS frame
+         -- draw after it and count toward the frame completed at the NEXT
+         -- trigger, so a full frame is 216 lines
          if (vblank_trigger = '1') then
-            if (linesDrawn = 160) then
+            if (linesDrawn = 216) then
                lineUpToDate <= (others => '0');
             end if;
             linesDrawn      <= 0;
-         end if;  
-         if (drawline_1 = '1' and linesDrawn < 160 and (drawstate = IDLE or nextLineDrawn = '1')) then
+         end if;
+         if (drawline_1 = '1' and linesDrawn < 216 and (drawstate = IDLE or nextLineDrawn = '1')) then
             linesDrawn <= linesDrawn + 1;
          end if;
          
@@ -1334,7 +1340,7 @@ begin
 
          case (drawstate) is
             when IDLE =>
-               if (drawline_1 = '1' and linesDrawn < 160) then
+               if (drawline_1 = '1' and linesDrawn < 216) then
                   if (nextLineDrawn = '0') then
                      drawstate       <= WAITHBLANK;
                      start_draw      <= '1';
@@ -1345,7 +1351,10 @@ begin
                end if;
                
             when WAITHBLANK =>
-               if (hblank_trigger = '1') then
+               -- newline_invsync is the vblank-region equivalent of
+               -- hblank_trigger: it lets the tall lines (160..215) start
+               -- drawing without touching real hblank consumers (mosaic)
+               if (hblank_trigger = '1' or newline_invsync = '1') then
                   drawstate <= DRAWING;
                end if;
 

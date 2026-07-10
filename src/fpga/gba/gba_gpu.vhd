@@ -29,8 +29,8 @@ entity gba_gpu is
       bitmapdrawmode       : out   std_logic;
 
       pixel_out_x          : out   integer range 0 to 239;
-      pixel_out_y          : out   integer range 0 to 159;
-      pixel_out_addr       : out   integer range 0 to 38399;
+      pixel_out_y          : out   integer range 0 to 215;
+      pixel_out_addr       : out   integer range 0 to 51839;
       pixel_out_data       : out   std_logic_vector(17 downto 0);
       pixel_out_we         : out   std_logic := '0';
       render_stall         : out   std_logic := '0';
@@ -88,8 +88,8 @@ architecture arch of gba_gpu is
    signal pixelpos             : integer range 0 to 511;
    
    signal pixel_x              : integer range 0 to 239;
-   signal pixel_y              : integer range 0 to 159;
-   signal pixel_addr           : integer range 0 to 38399;
+   signal pixel_y              : integer range 0 to 215;
+   signal pixel_addr           : integer range 0 to 51839;
    signal pixel_data           : std_logic_vector(14 downto 0);
    signal pixel_we             : std_logic := '0';
    signal drawer_ready         : std_logic := '0';
