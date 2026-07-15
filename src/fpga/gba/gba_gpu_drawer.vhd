@@ -1302,7 +1302,9 @@ begin
          end if;
          -- synthesis translate_on
          
-         if (hblank_trigger = '1') then
+         -- newline_invsync extends the disable-check into the vblank lines so
+         -- DISPCNT layer-off is honored by the tall region (letterboxing)
+         if (hblank_trigger = '1' or newline_invsync = '1') then
             if (Screen_Display_BG0(Screen_Display_BG0'left) = '0') then on_delay_bg0 <= (others => '0'); end if;
             if (Screen_Display_BG1(Screen_Display_BG1'left) = '0') then on_delay_bg1 <= (others => '0'); end if;
             if (Screen_Display_BG2(Screen_Display_BG2'left) = '0') then on_delay_bg2 <= (others => '0'); end if;
