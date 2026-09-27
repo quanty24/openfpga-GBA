@@ -44,6 +44,7 @@ entity gba_gpu is
       IRP_LCDStat          : out   std_logic;
                            
       hblank_trigger       : buffer std_logic;
+      hblank_dma_trigger   : out    std_logic;
       vblank_trigger       : buffer std_logic;
       videodma_start       : out    std_logic;
       videodma_stop        : out    std_logic;
@@ -132,6 +133,7 @@ begin
            
       line_trigger                 => line_trigger,
       hblank_trigger               => hblank_trigger,                            
+      hblank_dma_trigger           => hblank_dma_trigger,
       vblank_trigger               => vblank_trigger,                            
       drawline                     => drawline,   
       refpoint_update              => refpoint_update,   

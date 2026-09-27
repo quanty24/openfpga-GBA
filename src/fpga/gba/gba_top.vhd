@@ -269,6 +269,7 @@ architecture arch of gba_top is
    signal new_cycles_valid_cpu : std_logic;   
    
    signal hblank_trigger : std_logic;
+   signal hblank_dma_trigger : std_logic;  -- TALL: also fires on tall band lines
    signal vblank_trigger : std_logic;
    signal videodma_start : std_logic;
    signal videodma_stop  : std_logic;
@@ -661,7 +662,7 @@ begin
       dma_soon            => dma_soon,
       
       sound_dma_req       => sound_dma_req,
-      hblank_trigger      => hblank_trigger,
+      hblank_trigger      => hblank_dma_trigger,
       vblank_trigger      => vblank_trigger,
       videodma_start      => videodma_start,
       videodma_stop       => videodma_stop ,   
@@ -754,6 +755,7 @@ begin
       IRP_LCDStat          => IRP_LCDStat,  
 
       hblank_trigger       => hblank_trigger,
+      hblank_dma_trigger   => hblank_dma_trigger,
       vblank_trigger       => vblank_trigger,
       videodma_start       => videodma_start,
       videodma_stop        => videodma_stop ,   

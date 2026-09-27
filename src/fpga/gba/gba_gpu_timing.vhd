@@ -48,6 +48,7 @@ entity gba_gpu_timing is
       linecounter_drawer   : out unsigned(7 downto 0);
       pixelpos             : out integer range 0 to 511;
       tall_mode            : out std_logic := '0';
+      hblank_dma_trigger   : out std_logic := '0';  -- hblank_trigger + tall band lines
       
       DISPSTAT_debug       : out std_logic_vector(31 downto 0)
    );
@@ -69,6 +70,7 @@ architecture arch of gba_gpu_timing is
    signal TALLCNT_written   : std_logic;
    signal TALLCNT_bEna      : std_logic_vector(3 downto 0);
    signal tall_request      : std_logic := '0';
+   signal tall_mode_i       : std_logic := '0';
    signal linecounter_1     : unsigned(7 downto 0) := (others => '0');
    
    type tGPUState is
@@ -126,17 +128,18 @@ begin
             end if;
          end if;
          if (linecounter = 0 and linecounter_1 /= 0) then
-            tall_mode    <= tall_request;
+            tall_mode_i  <= tall_request;
             tall_request <= '0';
          end if;
          if (reset = '1') then
-            tall_mode    <= '0';
+            tall_mode_i  <= '0';
             tall_request <= '0';
          end if;
       end if;
    end process;
    
    linecounter_drawer <= linecounter;
+   tall_mode          <= tall_mode_i;
    render_stall       <= render_wait;
    
    REG_VCOUNT(23 downto 16) <= std_logic_vector(linecounter);
@@ -163,6 +166,7 @@ begin
          refpoint_update <= '0';
          line_trigger    <= '0';
          hblank_trigger  <= '0';
+         hblank_dma_trigger <= '0';
          vblank_trigger  <= '0';
          newline_invsync <= '0';
          
@@ -216,6 +220,7 @@ begin
                         gpustate                  <= HBLANK;
                         REG_DISPSTAT_H_Blank_flag <= "1";
                         hblank_trigger            <= '1';
+                        hblank_dma_trigger        <= '1';
                         if (linecounter >= 2) then
                            videodma_start  <= '1';
                         end if;
@@ -282,7 +287,12 @@ begin
                         gpustate                   <= VBLANKHBLANK;
                         REG_DISPSTAT_H_Blank_flag  <= "1";
                         newline_invsync            <= '1';
-                        -- don't do hblank for dma here!
+                        -- don't do hblank for dma here! -- except TALL: in
+                        -- tall frames HBlank DMA keeps feeding lines 161..215
+                        -- so per-line effects cover the whole 216-line picture
+                        if (tall_mode_i = '1' and linecounter < 215) then
+                           hblank_dma_trigger <= '1';
+                        end if;
                         if (REG_DISPSTAT_H_Blank_IRQ_Enable = "1") then
                            IRP_HBlank <= '1'; -- Note that no H-Blank interrupts are generated within V-Blank period. Really? Seems to work this way...
                         end if;

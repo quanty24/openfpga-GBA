@@ -9,7 +9,7 @@
       "description": "Game Boy Advance on the full 10:9 screen: centered letterbox, or 240x216 for games that request it",
       "author": "mincer_ray",
       "url": "https://github.com/mincer-ray/openfpga-GBA",
-      "version": "0.6.2-tall3",
+      "version": "0.6.2-tall4",
       "date_release": "2026-09-27"
     },
     "framework": {
