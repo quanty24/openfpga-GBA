@@ -19,6 +19,11 @@
 // TALL: the GPU renders 216 lines (56 into GBA vblank); scanning them out
 // keeps the frame at 228 total lines, so the refresh rate is unchanged.
 // 240x216 is exactly 10:9 -- the Pocket's native screen shape.
+//
+// Only games that ask for it (tall_mode, set per frame through the GBA's
+// TALLCNT register) are shown 240x216. Every other frame shows GBA rows
+// 0-159 centered between 28-line black bars, so unmodified games -- and
+// the non-overworld screens of tall-aware ones -- look letterboxed.
 
 module video_adapter (
     input  wire        clk_sys,       // ~100.66 MHz - GPU write domain
@@ -29,6 +34,7 @@ module video_adapter (
     input  wire [15:0] pixel_addr,    // 0-51839 (linear: row*240 + col)
     input  wire [17:0] pixel_data,    // {R[5:0], G[5:0], B[5:0]}
     input  wire        pixel_we,
+    input  wire        tall_mode,     // clk_sys: current GBA frame is 240x216
 
     // Video output to APF scaler (clk_vid domain)
     output reg  [23:0] video_rgb,
@@ -52,6 +58,9 @@ module video_adapter (
     localparam int unsigned V_TOTAL  = V_ACTIVE + V_FP + V_SYNC + V_BP;
 
     localparam int unsigned FB_PIXELS = H_ACTIVE * V_ACTIVE;
+    localparam int unsigned GBA_LINES = 160;
+    localparam int unsigned BAR       = (V_ACTIVE - GBA_LINES) / 2;   // 28
+    localparam logic [7:0]  BAR8      = BAR;
 
     // === Framebuffer (dual-clock BRAM) ===
     // 51,840 x 18-bit ~ 117 KB ~ 41 M10K blocks (240x216 tall)
@@ -102,13 +111,30 @@ module video_adapter (
     wire vs_region = (v_count >= V_ACTIVE + V_FP) &&
                      (v_count <  V_ACTIVE + V_FP + V_SYNC);
 
+    // === Picture mode (clk_sys -> clk_vid) ===
+    // Synchronized, then frozen for each scanned-out frame: it may only
+    // change while the raster is in vertical blanking.
+    reg [1:0] tall_sync = 2'b00;
+    reg       frame_tall = 1'b0;
+    always @(posedge clk_vid) begin
+        tall_sync <= {tall_sync[0], tall_mode};
+        if (v_count >= V_ACTIVE)
+            frame_tall <= tall_sync[1];
+    end
+
+    // Letterboxed frames: raster rows BAR..BAR+159 show GBA rows 0..159
+    wire       in_bar  = !frame_tall && (v_count < BAR || v_count >= BAR + GBA_LINES);
+    wire [7:0] src_row = frame_tall ? v_count : (in_bar ? 8'd0 : v_count - BAR8);
+
     // === Port B: Framebuffer Read (clk_vid domain) ===
-    wire [15:0] read_addr = v_count * H_ACTIVE + h_count;
+    wire [15:0] read_addr = src_row * H_ACTIVE + h_count;
 
     reg [17:0] pixel_read;
+    reg        bar_d1;
     always @(posedge clk_vid) begin
         if (active)
             pixel_read <= framebuffer[read_addr];
+        bar_d1 <= in_bar;
     end
 
     // === Color Expansion: 6-bit -> 8-bit ===
@@ -144,7 +170,7 @@ module video_adapter (
             video_vs   <= 1'b0;
             video_skip <= 1'b0;
         end else begin
-            video_rgb  <= active_d1 ? {r8, g8, b8} : 24'd0;
+            video_rgb  <= (active_d1 && !bar_d1) ? {r8, g8, b8} : 24'd0;
             video_de   <= active_d1;
             video_hs   <= hs_pipe[0] & ~hs_pipe[1];
             video_vs   <= vs_pipe[0] & ~vs_pipe[1];

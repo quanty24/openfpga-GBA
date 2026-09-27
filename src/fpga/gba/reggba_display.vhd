@@ -172,4 +172,8 @@ package pReg_gba_display is
     
    constant BLDY                          : regmap_type := (16#054#,   4,      0,        1,        0,   writeonly); -- Brightness (Fade-In/Out) Coefficient  0-4   EVY Coefficient (Brightness) (0..16 = 0/16..16/16, 17..31=16/16 
    
+   -- GBATall: unused on real hardware. A 16-bit write of 0x7A11 during a frame
+   -- shows the next frame 240x216; every other frame is letterboxed 240x160.
+   constant TALLCNT                       : regmap_type := (16#058#,  15,      0,        1,        0,   writeonly);
+   
 end package;

@@ -121,6 +121,7 @@ entity gba_top is
       pixel_out_addr        : buffer integer range 0 to 51839;       -- address for framebuffer 
       pixel_out_data        : buffer std_logic_vector(17 downto 0);  -- RGB data for framebuffer 
       pixel_out_we          : buffer std_logic;                      -- new pixel for framebuffer
+      tall_mode             : out    std_logic;                      -- GBATall: this frame is 240x216
       -- sound                             
       sound_out_left        : out    std_logic_vector(15 downto 0) := (others => '0');
       sound_out_right       : out    std_logic_vector(15 downto 0) := (others => '0');
@@ -742,6 +743,7 @@ begin
       pixel_out_addr       => pixel_out_addr,
       pixel_out_data       => pixel_out_data,
       pixel_out_we         => pixel_out_we,
+      tall_mode            => tall_mode,
       render_stall         => gpu_render_stall,
 
       new_cycles           => new_cycles,

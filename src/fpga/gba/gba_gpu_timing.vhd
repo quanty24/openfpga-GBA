@@ -47,6 +47,7 @@ entity gba_gpu_timing is
       newline_invsync      : out std_logic := '0';                       
       linecounter_drawer   : out unsigned(7 downto 0);
       pixelpos             : out integer range 0 to 511;
+      tall_mode            : out std_logic := '0';
       
       DISPSTAT_debug       : out std_logic_vector(31 downto 0)
    );
@@ -62,6 +63,13 @@ architecture arch of gba_gpu_timing is
    signal REG_DISPSTAT_V_Counter_IRQ_Enable : std_logic_vector(DISPSTAT_V_Counter_IRQ_Enable.upper downto DISPSTAT_V_Counter_IRQ_Enable.lower) := (others => '0');
    signal REG_DISPSTAT_V_Count_Setting      : std_logic_vector(DISPSTAT_V_Count_Setting     .upper downto DISPSTAT_V_Count_Setting     .lower) := (others => '0');
    signal REG_VCOUNT                        : std_logic_vector(VCOUNT                       .upper downto VCOUNT                       .lower) := (others => '0');
+   
+   -- GBATall picture request
+   signal REG_TALLCNT       : std_logic_vector(TALLCNT.upper downto TALLCNT.lower) := (others => '0');
+   signal TALLCNT_written   : std_logic;
+   signal TALLCNT_bEna      : std_logic_vector(3 downto 0);
+   signal tall_request      : std_logic := '0';
+   signal linecounter_1     : unsigned(7 downto 0) := (others => '0');
    
    type tGPUState is
    (
@@ -101,6 +109,32 @@ begin
    iREG_DISPSTAT_V_Counter_IRQ_Enable : entity work.eProcReg_gba generic map (DISPSTAT_V_Counter_IRQ_Enable) port map  (clk100, gb_bus, REG_DISPSTAT_V_Counter_IRQ_Enable , REG_DISPSTAT_V_Counter_IRQ_Enable ); 
    iREG_DISPSTAT_V_Count_Setting      : entity work.eProcReg_gba generic map (DISPSTAT_V_Count_Setting     ) port map  (clk100, gb_bus, REG_DISPSTAT_V_Count_Setting      , REG_DISPSTAT_V_Count_Setting      ); 
    iREG_VCOUNT                        : entity work.eProcReg_gba generic map (VCOUNT                       ) port map  (clk100, gb_bus, REG_VCOUNT); 
+   iREG_TALLCNT                       : entity work.eProcReg_gba generic map (TALLCNT                      ) port map  (clk100, gb_bus, x"0000", REG_TALLCNT, TALLCNT_written, TALLCNT_bEna); 
+   
+   -- GBATall: a game asks for the tall picture per frame. The request is
+   -- latched for the frame that starts at line 0 and then cleared, so games
+   -- that never write TALLCNT always get the centered letterbox.
+   process (clk100)
+   begin
+      if rising_edge(clk100) then
+         linecounter_1 <= linecounter;
+         if (TALLCNT_written = '1') then
+            if (REG_TALLCNT = x"7A11" and TALLCNT_bEna(1 downto 0) = "11") then
+               tall_request <= '1';
+            else
+               tall_request <= '0';
+            end if;
+         end if;
+         if (linecounter = 0 and linecounter_1 /= 0) then
+            tall_mode    <= tall_request;
+            tall_request <= '0';
+         end if;
+         if (reset = '1') then
+            tall_mode    <= '0';
+            tall_request <= '0';
+         end if;
+      end if;
+   end process;
    
    linecounter_drawer <= linecounter;
    render_stall       <= render_wait;

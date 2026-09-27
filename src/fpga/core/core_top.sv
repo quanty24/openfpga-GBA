@@ -1388,6 +1388,7 @@ assign video_rgb_clock_90 = clk_vid_90;
 wire [15:0] pixel_out_addr;
 wire [17:0] pixel_out_data;
 wire        pixel_out_we;
+wire        tall_mode;      // GBATall: game requested 240x216 this frame
 
 video_adapter video_out (
     .clk_sys    ( clk_sys ),
@@ -1397,6 +1398,7 @@ video_adapter video_out (
     .pixel_addr ( pixel_out_addr ),
     .pixel_data ( pixel_out_data ),
     .pixel_we   ( pixel_out_we ),
+    .tall_mode  ( tall_mode ),
 
     .video_rgb  ( video_rgb ),
     .video_de   ( video_de ),
@@ -1673,6 +1675,7 @@ gba_top #(
     .pixel_out_addr      ( pixel_out_addr ),
     .pixel_out_data      ( pixel_out_data ),
     .pixel_out_we        ( pixel_out_we ),
+    .tall_mode           ( tall_mode ),
     // Audio
     .sound_out_left      ( sound_out_left ),
     .sound_out_right     ( sound_out_right ),

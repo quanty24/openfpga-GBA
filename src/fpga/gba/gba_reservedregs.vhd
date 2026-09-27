@@ -20,8 +20,7 @@ begin
 
    addr <= unsigned(gb_bus.Adr);
 
-   gb_bus.done <=  '0' when (addr  = 16#58#                   ) else 
-                   '0' when (addr  = 16#5C#                   ) else 
+   gb_bus.done <=  '0' when (addr  = 16#5C#                   ) else 
                    '0' when (addr  = 16#8C#                   ) else 
                    '0' when (addr  = 16#A8#                   ) else 
                    '0' when (addr  = 16#AC#                   ) else 

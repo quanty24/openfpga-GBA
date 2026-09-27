@@ -33,6 +33,7 @@ entity gba_gpu is
       pixel_out_addr       : out   integer range 0 to 51839;
       pixel_out_data       : out   std_logic_vector(17 downto 0);
       pixel_out_we         : out   std_logic := '0';
+      tall_mode            : out   std_logic := '0';
       render_stall         : out   std_logic := '0';
 
       new_cycles           : in    unsigned(7 downto 0);
@@ -137,6 +138,7 @@ begin
       newline_invsync              => newline_invsync,   
       linecounter_drawer           => linecounter_drawer, 
       pixelpos                     => pixelpos,
+      tall_mode                    => tall_mode,
                                    
       DISPSTAT_debug               => DISPSTAT_debug
    );
