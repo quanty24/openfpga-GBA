@@ -460,7 +460,10 @@ begin
                end if;
 
                posy := to_integer(unsigned(Pixel_data0(OAM_Y_HI downto OAM_Y_LO)));
-               if (posy > (16#100# - fieldY)) then
+               -- TALL: Y wraps modulo 256; on the tall band (lines 160-215)
+               -- keep the raw Y so a sprite past line 256 still covers the
+               -- band's lines from Y down (lines 0-159 unchanged)
+               if (posy > (16#100# - fieldY) and ypos < 160) then
                   posy := posy - 16#100#;
                end if;
                if (Pixel_data0(OAM_MOSAIC) = '1') then
