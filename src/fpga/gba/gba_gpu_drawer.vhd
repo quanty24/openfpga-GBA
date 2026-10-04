@@ -258,6 +258,7 @@ architecture arch of gba_gpu_drawer is
    signal line_trigger_11      : std_logic := '0';
    signal drawline_1           : std_logic := '0';
    signal hblank_trigger_1     : std_logic := '0';
+   signal newline_invsync_1    : std_logic := '0';
    
    signal drawline_mode0_0     : std_logic;
    signal drawline_mode0_1     : std_logic;
@@ -1560,21 +1561,33 @@ begin
             end if;
          end if;
          
+         -- TALL scanout: the vertical mosaic counters run through the tall
+         -- band (lines 160..215) like any visible line and restart with the
+         -- frame at line 0 -- not at vblank_trigger (line 160), which left
+         -- every band line of a mosaic-flagged layer on row 0 (Emerald's
+         -- overworld BG1-3 carry the mosaic bit with size 0: the band showed
+         -- the screen's top row, stretched). For lines 0..159 this is the
+         -- same as before: the counters sat at 0 from line 160 until line 0
+         newline_invsync_1 <= newline_invsync;
+
          if (vblank_trigger = '1') then
-            mosaik_vcnt_bg         <= 0;
-            mosaik_vcnt_obj        <= 0;
-            linecounter_mosaic_bg  <= 0;
-            linecounter_mosaic_obj <= 0;
             new_dx2                <= '1';
             new_dy2                <= '1';
             new_dx3                <= '1';
             new_dy3                <= '1';
-         elsif (hblank_trigger_1 = '1') then
+         end if;
+
+         if (line_trigger = '1' and linecounter = 0) then
+            mosaik_vcnt_bg         <= 0;
+            mosaik_vcnt_obj        <= 0;
+            linecounter_mosaic_bg  <= 0;
+            linecounter_mosaic_obj <= 0;
+         elsif (hblank_trigger_1 = '1' or (newline_invsync_1 = '1' and linecounter < 215)) then
          
             -- background
             if (mosaik_vcnt_bg >= unsigned(REG_MOSAIC_BG_Mosaic_V_Size)) then
                mosaik_vcnt_bg        <= 0;
-               if (linecounter < 159) then
+               if (linecounter < 215) then
                   linecounter_mosaic_bg <= to_integer(linecounter) + 1;
                end if;
                mosaic_ref2_x         <= ref2_x;
@@ -1588,7 +1601,7 @@ begin
             -- sprite
             if (mosaik_vcnt_obj >= unsigned(REG_MOSAIC_OBJ_Mosaic_V_Size)) then
                mosaik_vcnt_obj        <= 0;
-               if (linecounter < 159) then
+               if (linecounter < 215) then
                   linecounter_mosaic_obj <= to_integer(linecounter) + 1;
                end if;
             else
