@@ -1547,7 +1547,10 @@ begin
             dy3_last      <= signed(REG_BG3RotScaleParDY);
          end if;
          
-         if (hblank_trigger = '1') then
+         -- TALL scanout: the affine reference points (and the backdrop latch)
+         -- step on the band's line ends too, so rotating/scaled BG2/BG3 run on
+         -- through lines 160..215 instead of repeating row 160
+         if (hblank_trigger = '1' or (newline_invsync = '1' and linecounter < 215)) then
          
             pixeldata_back <= pixeldata_back_next;
          

@@ -258,7 +258,10 @@ begin
                               -- GBA-visible vblank semantics stay exact
                               drawsoon                  <= '1';
                               pixelpos                  <= 0;
-                              refpoint_update           <= '1';
+                              -- TALL scanout: the affine reference points
+                              -- reload at line 216 (below), after the band --
+                              -- reloading here froze BG2/BG3 on row 160 for
+                              -- all of lines 160..215
                               REG_DISPSTAT_V_Blank_flag <= "1";
                               vblank_trigger            <= '1';
                               if (REG_DISPSTAT_V_Blank_IRQ_Enable = "1") then
@@ -326,6 +329,13 @@ begin
                            pixelpos    <= 0;
                         else
                            gpustate <= VBLANK;
+                           if ((linecounter + 1) = 216) then
+                              -- TALL scanout: the reload the GBA does at
+                              -- vblank entry, moved past the band; lines
+                              -- 216..227 aren't drawn, and BGxX/Y writes
+                              -- in between still reload at the next line
+                              refpoint_update <= '1';
+                           end if;
                            if ((linecounter + 1) < 216) then
                               -- TALL scanout: lines 161..215 keep drawing
                               drawsoon <= '1';
