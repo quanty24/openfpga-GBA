@@ -259,6 +259,7 @@ architecture arch of gba_gpu_drawer is
    signal drawline_1           : std_logic := '0';
    signal hblank_trigger_1     : std_logic := '0';
    signal newline_invsync_1    : std_logic := '0';
+   signal merge_latch          : std_logic;
    
    signal drawline_mode0_0     : std_logic;
    signal drawline_mode0_1     : std_logic;
@@ -1003,6 +1004,7 @@ begin
    drawline_mode2_3     <= on_delay_bg3(2) and start_draw when BG_Mode = "010" else '0';
    drawline_mode345     <= on_delay_bg2(2) and start_draw when BG_Mode = "011" or BG_Mode = "100" or BG_Mode = "101" else '0';
    drawline_obj         <= Screen_Display_OBJ(Screen_Display_OBJ'left) and start_draw;
+   merge_latch          <= hblank_trigger_1 or newline_invsync_1;
 
    PALETTE_BG_Drawer_addr0 <= PALETTE_Drawer_addr_mode0_0;
    PALETTE_BG_Drawer_addr1 <= PALETTE_Drawer_addr_mode0_1;
@@ -1434,7 +1436,10 @@ begin
       clk100               => clk100,                
                            
       enable               => merge_enable_1,                     
-      hblank               => hblank_trigger_1,   -- delayed 1 cycle because background is switched off at hblank                  
+      -- delayed 1 cycle because background is switched off at hblank;
+      -- TALL scanout: the band's line ends latch too, so per-line window /
+      -- blend values (HBlank DMA) apply to lines 160..215 instead of line 159's
+      hblank               => merge_latch,
       xpos                 => linebuffer_addr_1,
       ypos                 => linecounter_int,
       
