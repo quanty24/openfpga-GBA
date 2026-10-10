@@ -308,7 +308,12 @@ begin
                      end if;
                   
                   when VBLANKHBLANK =>
-                     if (cycles >= 224) then -- 272
+                     -- TALL scanout: lines 160..215 are drawn too, so the
+                     -- stable fast-forward hold applies to them like HBLANK
+                     if (cycles >= 224 and lockspeed = '0' and stable_ff_video = '1' and drawer_ready = '0' and linecounter < 216) then
+                        render_wait <= '1';
+                     elsif (cycles >= 224) then -- 272
+                        render_wait <= '0';
                         cycles      <= cycles - 224;
                         linecounter <= linecounter + 1;
                         if ((linecounter + 1) = unsigned(REG_DISPSTAT_V_Count_Setting) or ((linecounter + 1) = 228 and REG_DISPSTAT_V_Count_Setting = x"00")) then

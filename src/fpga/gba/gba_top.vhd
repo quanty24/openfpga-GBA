@@ -25,6 +25,7 @@ entity gba_top is
       GBA_on                : in     std_logic;  -- switching from off to on = reset
       GBA_lockspeed         : in     std_logic;  -- 1 = 100% speed, 0 = max speed
       GBA_stable_ff_video   : in     std_logic;  -- 1 = hold HBlank in fast forward until drawer is idle
+      GBA_ff_speed          : in     std_logic_vector(2 downto 0) := "000"; -- fast forward cap: 0 = max speed, 2..5 = that many times 100%
       GBA_cputurbo          : in     std_logic;  -- 1 = cpu free running, all other 16 mhz
       GBA_flash_1m          : in     std_logic;  -- 1 when string "FLASH1M_V" is anywhere in gamepak
       CyclePrecalc          : in     std_logic_vector(15 downto 0); -- 100 seems to be ok to keep fullspeed for all games
@@ -322,6 +323,8 @@ architecture arch of gba_top is
    signal cycles_16_100   : integer range 0 to (SPEEDDIV - 1) := 0;
    signal new_missing     : std_logic := '0';
    signal new_exact_cycle : std_logic := '0';
+   signal ff_capped       : std_logic := '0';
+   signal ff_credit       : integer range 1 to 7 := 1;
    signal CyclesVsync     : unsigned(31 downto 0) := (others => '0');
    signal bench_slow      : integer range 0 to 1685375 := 0;
 begin 
@@ -946,31 +949,51 @@ begin
    end process;
    
    ------------- cycling
+   -- fast forward capped at GBA_ff_speed x 100%: the same pacing as normal
+   -- speed, but each SPEEDDIV-clock slot pays off that many GBA cycles
+   -- instead of one. Everything else still sees lockspeed = 0 (fast forward
+   -- video/sound paths unchanged); only how fast the CPU may run is capped.
+   -- (registered: both inputs are slow settings/buttons, and this keeps them
+   -- off the cycles_ahead -> gba_step path)
+   process (clk100)
+   begin
+      if rising_edge(clk100) then
+         if (GBA_lockspeed = '0' and unsigned(GBA_ff_speed) >= 2) then
+            ff_capped <= '1';
+            ff_credit <= to_integer(unsigned(GBA_ff_speed));
+         else
+            ff_capped <= '0';
+            ff_credit <= 1;
+         end if;
+      end if;
+   end process;
+
    process (clk100)
       variable new_cycles_ahead : integer range 0 to 1023;
    begin
       if rising_edge(clk100) then
-         
+
          new_missing     <= '0';
          new_exact_cycle <= '0';
-         
+
          new_cycles_ahead := cycles_ahead;
          if (new_cycles_valid = '1') then
             new_cycles_ahead := new_cycles_ahead + to_integer(new_cycles);
          end if;
-         
+
          if (cycles_16_100 < (SPEEDDIV - 1)) then
             cycles_16_100 <= cycles_16_100 + 1;
          else
             cycles_16_100   <= 0;
             new_exact_cycle <= '1';
-            if (new_cycles_ahead > 0) then
-               new_cycles_ahead := new_cycles_ahead - 1;
+            if (new_cycles_ahead >= ff_credit) then
+               new_cycles_ahead := new_cycles_ahead - ff_credit;
             else
+               new_cycles_ahead := 0;
                new_missing <= '1';
             end if;
          end if;
-         if (GBA_lockspeed = '1') then
+         if (GBA_lockspeed = '1' or ff_capped = '1') then
             cycles_ahead <= new_cycles_ahead;
          else
             cycles_ahead <= 0;
@@ -979,7 +1002,7 @@ begin
          gba_step <= '0';
          if (DEBUG_NOCPU = '0' and sleep_savestate = '0' and sleep_external = '0' and
             gpu_render_stall = '0' and
-            (GBA_lockspeed = '0' or GBA_cputurbo = '1' or cycles_ahead < unsigned(CyclePrecalc))) then
+            ((GBA_lockspeed = '0' and ff_capped = '0') or GBA_cputurbo = '1' or cycles_ahead < unsigned(CyclePrecalc))) then
             gba_step <= '1';
          end if;
       
